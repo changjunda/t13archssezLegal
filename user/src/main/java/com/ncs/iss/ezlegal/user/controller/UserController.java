@@ -1,16 +1,30 @@
 package com.ncs.iss.ezlegal.user.controller;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URLConnection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ncs.iss.ezlegal.user.model.AddLawyerDTO;
 import com.ncs.iss.ezlegal.user.model.AddUserDTO;
 import com.ncs.iss.ezlegal.user.model.AddUserResponseDTO;
+import com.ncs.iss.ezlegal.user.model.Document;
 import com.ncs.iss.ezlegal.user.model.GetUserDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserEmailDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserEmailResponseDTO;
@@ -21,6 +35,7 @@ import com.ncs.iss.ezlegal.user.model.LogoutUserDTO;
 import com.ncs.iss.ezlegal.user.model.LogoutUserResponseDTO;
 import com.ncs.iss.ezlegal.user.model.UpdateUserDTO;
 import com.ncs.iss.ezlegal.user.model.UpdateUserResponseDTO;
+import com.ncs.iss.ezlegal.user.service.DocumentService;
 import com.ncs.iss.ezlegal.user.service.UserService;
 
 @RestController
@@ -29,6 +44,9 @@ public class UserController {
 	
 	@Autowired
 	UserService us;
+	
+	@Autowired
+	DocumentService fs;
 	
 	@PostMapping(value="/adduser" , consumes = "application/json")
 	public ResponseEntity<AddUserResponseDTO> addUser(@RequestBody AddUserDTO request) {
@@ -64,5 +82,57 @@ public class UserController {
 	public ResponseEntity<LogoutUserResponseDTO> logoutUser(@RequestBody LogoutUserDTO request) {
 		return new ResponseEntity<> (us.logoutUser(request), HttpStatus.OK);
 	}
+	
+	@PostMapping(value = "/uploadfile", consumes = "multipart/form-data")
+    public ResponseEntity<String> uploadfile(@RequestParam("name") String name,
+            @RequestParam("file") MultipartFile file)
+            throws Throwable {
+        
+		HttpServletRequest urequest = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+		String userIndex = (String) urequest.getAttribute("userIndex");
+        //MultipartFile multipartFile = request.getFile("uploadFile");
+        //int size = (int) multipartFile.getSize();
+        //String contentType = multipartFile.getContentType();
+        //String name = multipartFile.getOriginalFilename();
+        InputStream stream = file.getInputStream();
+        
+        boolean saved = fs.saveAFile(name, Integer.parseInt(userIndex), stream);
+        
+        if(saved) {
+        	return new ResponseEntity<> ("success", HttpStatus.OK);
+        }
+        return new ResponseEntity<> ("fail", HttpStatus.OK);
+    }
+    
+    @ResponseBody
+    @PostMapping(value = "/deletefile", consumes = "application/json")
+    public ResponseEntity<String> deletefile(@RequestParam("fileId") int fileId) throws Throwable {
+        boolean deleted = fs.deleteAFile(fileId);
+        if(deleted) {
+        	return new ResponseEntity<> ("success", HttpStatus.OK);
+        }
+        return new ResponseEntity<> ("fail", HttpStatus.OK);
+    }
+    
+    @PostMapping(value = "/downloadfile", consumes = "application/json")
+    public void downloadfile(@RequestParam("fileId") int fileId,
+            HttpServletResponse response) throws Throwable {
+        
+        Document d = fs.selectAFile(fileId);
+        if(d != null) {
+	        InputStream is = new BufferedInputStream(new ByteArrayInputStream(d.getDocument()));
+	        String mimeType = URLConnection.guessContentTypeFromStream(is);
+	        response.setContentType(mimeType);
+	        response.addHeader("Content-Disposition",
+	                "attachment; filename=\"" + d.getName() + "\"");
+	        response.setContentLength(d.getDocument().length);
+	        response.getOutputStream().write(d.getDocument());
+	        
+	        response.flushBuffer();
+        } else {
+        	response.getWriter().println("Document not found");
+        	response.setStatus(404);
+        }
+    }
 	
 }
