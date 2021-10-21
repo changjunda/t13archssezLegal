@@ -4,7 +4,7 @@ run-as: root
 
 env:
     shell: bash
-	
+
     phases:
         build:
             run-as: root
@@ -19,4 +19,3 @@ env:
                 - ./tagging/demo.sh
                 - ./rating/demo.sh
                 - ./forum/demo.sh
-				
