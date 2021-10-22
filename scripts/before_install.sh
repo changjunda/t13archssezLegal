@@ -1,4 +1,5 @@
 #!/bin/bash
+#look for updates
 sudo yum -y update
 #create our working directory if it doesn't exist
 DIR="/home/ec2-user/t13archssezLegal"
