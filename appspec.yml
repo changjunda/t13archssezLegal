@@ -13,23 +13,6 @@ hooks:
       timeout: 300
       runas: ec2-user
   ApplicationStart:
-    - location: scripts/application_start.sh
+    - location: scripts/before_install.sh
       timeout: 300
       runas: ec2-user
-#run-as: root
-#env:
-#    shell: bash
-#    phases:
-#        build:
-#            run-as: root
-#            on-failure: ABORT
-#            commands:
-#                - mvn -f user clean package
-#                - mvn -f tagging clean package
-#                - mvn -f rating clean package
-#                - mvn -f forum clean package
-#            finally:
-#                - ./user/demo.sh
-#                - ./tagging/demo.sh
-#                - ./rating/demo.sh
-#                - ./forum/demo.sh
