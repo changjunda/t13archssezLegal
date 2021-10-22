@@ -1,4 +1,5 @@
 #!/bin/bash
+#launch dockers
 cd /home/ec2-user/t13archssezLegal/user/
 chmod +x demo.sh
 ./demo.sh
