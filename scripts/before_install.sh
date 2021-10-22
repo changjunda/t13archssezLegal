@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo yum -y update
 
 #create our working directory if it doesn't exist
