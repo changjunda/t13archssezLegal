@@ -16,12 +16,9 @@ hooks:
     - location: scripts/application_start.sh
       timeout: 300
       runas: ec2-user
-
 #run-as: root
-
 #env:
 #    shell: bash
-
 #    phases:
 #        build:
 #            run-as: root
