@@ -1,6 +1,7 @@
 package com.ncs.iss.ezlegal.user.service.impl;
 
 import java.io.InputStream;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,4 +51,9 @@ public class DocumentServiceImpl implements DocumentService {
     public Document selectAFile(int fileId) {      
     	return dr.getDocumentById(fileId);
     }
+	
+	@Override
+	public List<Document> listAllFile(int userId) {
+		return dr.getDocumentByUserId(userId);
+	}
 }
