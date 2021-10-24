@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -24,11 +25,14 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ncs.iss.ezlegal.user.model.AddLawyerDTO;
 import com.ncs.iss.ezlegal.user.model.AddUserDTO;
 import com.ncs.iss.ezlegal.user.model.AddUserResponseDTO;
+import com.ncs.iss.ezlegal.user.model.DeleteDocumentDTO;
 import com.ncs.iss.ezlegal.user.model.Document;
+import com.ncs.iss.ezlegal.user.model.DownloadDocumentDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserEmailDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserEmailResponseDTO;
 import com.ncs.iss.ezlegal.user.model.GetUserResponseDTO;
+import com.ncs.iss.ezlegal.user.model.ListDocumentDTO;
 import com.ncs.iss.ezlegal.user.model.LoginUserDTO;
 import com.ncs.iss.ezlegal.user.model.LoginUserResponseDTO;
 import com.ncs.iss.ezlegal.user.model.LogoutUserDTO;
@@ -84,8 +88,7 @@ public class UserController {
 	}
 	
 	@PostMapping(value = "/uploadfile", consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadfile(@RequestParam("name") String name,
-            @RequestParam("file") MultipartFile file)
+    public ResponseEntity<String> uploadfile(@RequestPart(value="name", required=true) String name, @RequestPart(value="file", required=true) MultipartFile file)
             throws Throwable {
         
 		HttpServletRequest urequest = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
@@ -106,8 +109,8 @@ public class UserController {
     
     @ResponseBody
     @PostMapping(value = "/deletefile", consumes = "application/json")
-    public ResponseEntity<String> deletefile(@RequestParam("fileId") int fileId) throws Throwable {
-        boolean deleted = fs.deleteAFile(fileId);
+    public ResponseEntity<String> deletefile(@RequestBody DeleteDocumentDTO request) throws Throwable {
+        boolean deleted = fs.deleteAFile(request.getId());
         if(deleted) {
         	return new ResponseEntity<> ("success", HttpStatus.OK);
         }
@@ -115,10 +118,10 @@ public class UserController {
     }
     
     @PostMapping(value = "/downloadfile", consumes = "application/json")
-    public void downloadfile(@RequestParam("fileId") int fileId,
+    public void downloadfile(@RequestBody DownloadDocumentDTO request,
             HttpServletResponse response) throws Throwable {
         
-        Document d = fs.selectAFile(fileId);
+        Document d = fs.selectAFile(request.getId());
         if(d != null) {
 	        InputStream is = new BufferedInputStream(new ByteArrayInputStream(d.getDocument()));
 	        String mimeType = URLConnection.guessContentTypeFromStream(is);
@@ -133,6 +136,15 @@ public class UserController {
         	response.getWriter().println("Document not found");
         	response.setStatus(404);
         }
+    }
+    
+    @PostMapping(value = "/listfile", consumes = "application/json")
+    public ResponseEntity<List<Document>> listfile(@RequestBody ListDocumentDTO request,
+            HttpServletResponse response) throws Throwable {
+        
+        List<Document> dl = fs.listAllFile(request.getUserId());
+        
+        return new ResponseEntity<> (dl, HttpStatus.OK);
     }
 	
 }
